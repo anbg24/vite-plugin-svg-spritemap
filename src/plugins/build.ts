@@ -9,6 +9,7 @@ export default function BuildPlugin(iconsPattern: Pattern, options: Options): Pl
   let config: ResolvedConfig
   let fileRef: string
   let fileName: string
+  let fileNameWithHash: string
   let svgManager: SVGManager
   const spritemapFilter = new RegExp(`/${options?.route || '__spritemap'}`, 'g')
   const pluginExternal: ExternalOption = new RegExp(`/${options?.route || '__spritemap'}`)
@@ -68,6 +69,7 @@ export default function BuildPlugin(iconsPattern: Pattern, options: Options): Pl
           fileName: filePath,
           originalFileName: options.output.name,
         })
+        fileNameWithHash = this.getFileName(fileRef)
       }
     },
     transform(code) {
@@ -82,10 +84,17 @@ export default function BuildPlugin(iconsPattern: Pattern, options: Options): Pl
       return {
         code: code.replace(
           spritemapFilter,
-          path.join(base, this.getFileName(fileRef)),
+          path.join(base, fileNameWithHash),
         ),
         map: null,
       }
+    },
+    transformIndexHtml(html: string) {
+      const base = config.base.startsWith('.')
+        ? config.base.substring(1)
+        : config.base
+
+      return html.replace(spritemapFilter, path.join(base, fileNameWithHash))
     },
   }
 }
